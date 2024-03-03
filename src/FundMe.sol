@@ -8,6 +8,8 @@ contract FundMe {
     // Errors
     error FundMe__NotOwner();
     error FundMe__NotEnoughETH();
+    error FundMe__TxFailed();
+
     // Types
     using PriceConverter for uint256;
     // State variables
@@ -32,6 +34,7 @@ contract FundMe {
         s_priceFeed = AggregatorV3Interface(_priceFeed);
         i_owner = msg.sender;
     }
+
     // Receive / Fallback
 
     // External
@@ -39,7 +42,7 @@ contract FundMe {
     // Public
     function fund() public payable {
         // if msg.value is less than MINIMUM_USD, revert
-        if(msg.value.getConversionRate(s_priceFeed) < MINIMUM_USD) {
+        if (msg.value.getConversionRate(s_priceFeed) < MINIMUM_USD) {
             revert FundMe__NotEnoughETH();
         }
 
@@ -50,5 +53,47 @@ contract FundMe {
         s_funders.push(msg.sender);
     }
 
-    function withdraw() public {}
+    /**
+     * Function sends the address balance to the owner
+     * @notice Only the owner can call this function
+     */
+    function withdraw() public onlyOwner {
+        // empty addressToAmountFunded mapping
+        for (uint256 i = 0; i < s_funders.length; i++) {
+            address funder = s_funders[i];
+            s_addressToAmountFunded[funder] = 0;
+        }
+
+        // empty the array of funders
+        s_funders = new address[](0);
+
+        // send funds to owner
+        (bool success, ) = i_owner.call{value: address(this).balance}("");
+        if (!success) {
+            revert FundMe__TxFailed();
+        }
+    }
+
+    // Internal
+
+    // Private
+
+    // View | Pure
+    function getAddressToAmountFunded(
+        address _fundingAddress
+    ) public view returns (uint256) {
+        return s_addressToAmountFunded[_fundingAddress];
+    }
+
+    function getFunder(uint256 index) public view returns (address) {
+        return s_funders[index];
+    }
+
+    function getOwner() public view returns (address) {
+        return i_owner;
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return s_priceFeed;
+    }
 }
