@@ -18,6 +18,13 @@ contract FundMeTest is Test {
 
     address public constant USER = address(1);
 
+    modifier funded() {
+        vm.startPrank(USER);
+        fundMe.fund{value: SEND_VALUE}();
+        vm.stopPrank();
+        _;
+    }
+
     function setUp() external {
         DeployFundMe deployer = new DeployFundMe();
         (fundMe, helper) = deployer.run();
@@ -36,29 +43,17 @@ contract FundMeTest is Test {
         fundMe.fund();
     }
 
-    function testFundBalanceUpdated() public {
-        vm.startPrank(USER);
-        fundMe.fund{value: SEND_VALUE}();
-        vm.stopPrank();
-
+    function testFundBalanceUpdated() public funded {
         uint256 amoundFunded = address(fundMe).balance;
         assertEq(amoundFunded, SEND_VALUE);
     }
 
-    function testFundUpdatesFundedDataStructure() public {
-        vm.startPrank(USER);
-        fundMe.fund{value: SEND_VALUE}();
-        vm.stopPrank();
-
+    function testFundUpdatesFundedDataStructure() public funded {
         uint256 funderAmount = fundMe.getAddressToAmountFunded(USER);
         assertEq(funderAmount, SEND_VALUE);
     }
 
-    function testFundUpdatesFundersArray() public {
-        vm.startPrank(USER);
-        fundMe.fund{value: SEND_VALUE}();
-        vm.stopPrank();
-
+    function testFundUpdatesFundersArray() public funded {
         address funder = fundMe.getFunder(0);
         assertEq(funder, USER);
     }
@@ -68,11 +63,7 @@ contract FundMeTest is Test {
         fundMe.withdraw();
     }
 
-    function testWithdrawFromOneFunder() public {
-        vm.startPrank(USER);
-        fundMe.fund{value: SEND_VALUE}();
-        vm.stopPrank();
-
+    function testWithdrawFromOneFunder() public funded {
         uint256 initialContractBalance = address(fundMe).balance;
         uint256 initialOwnerBalance = fundMe.getOwner().balance;
 
