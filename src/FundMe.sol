@@ -1,3 +1,25 @@
+// Layout of Contract:
+// version
+// imports
+// errors
+// interfaces, libraries, contracts
+// Type declarations
+// State variables
+// Events
+// Modifiers
+// Functions
+
+// Layout of Functions:
+// constructor
+// receive function (if exists)
+// fallback function (if exists)
+// external
+// public
+// internal
+// private
+// internal & private view & pure functions
+// external & public view & pure functions
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -5,23 +27,17 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
 import {PriceConverter} from "./PriceConverter.sol";
 
 contract FundMe {
-    // Errors
     error FundMe__NotOwner();
     error FundMe__NotEnoughETH();
     error FundMe__TxFailed();
 
-    // Types
     using PriceConverter for uint256;
-    // State variables
     uint256 public constant MINIMUM_USD = 5 * 10 ** 18;
     address private immutable i_owner;
     address[] private s_funders;
     mapping(address => uint256) private s_addressToAmountFunded;
     AggregatorV3Interface private s_priceFeed;
 
-    // Events
-
-    // Modifiers
     modifier onlyOwner() {
         if (msg.sender != i_owner) {
             revert FundMe__NotOwner();
@@ -29,17 +45,11 @@ contract FundMe {
         _;
     }
 
-    // Constructor
     constructor(address _priceFeed) {
         s_priceFeed = AggregatorV3Interface(_priceFeed);
         i_owner = msg.sender;
     }
 
-    // Receive / Fallback
-
-    // External
-
-    // Public
     function fund() public payable {
         // if msg.value is less than MINIMUM_USD, revert
         if (msg.value.getConversionRate(s_priceFeed) < MINIMUM_USD) {
@@ -74,11 +84,6 @@ contract FundMe {
         }
     }
 
-    // Internal
-
-    // Private
-
-    // View | Pure
     function getAddressToAmountFunded(
         address _fundingAddress
     ) public view returns (uint256) {
